@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Digital AI Buddy - Find Your Tribe</title>
+  <title>FAM - Find Your Tribe</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/chatbot.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
       <div class="nav-brand">
-        <img src="logo.png" alt="Digital AI Buddy Logo" class="logo">
-        <h1>Digital AI Buddy</h1>
+        <img src="logo.png" alt="FAM Logo" class="logo">
+        <h1>FAM</h1>
       </div>
       <ul class="nav-menu" id="navMenu">
         <li><a href="index.html">Home</a></li>
         <li><a href="events.html">Events</a></li>
         <li><a href="communities.html">Communities</a></li>
+        <li><a href="nearby-caregivers.html">Caregivers</a></li>
         <li id="profileLink" style="display: none;"><a href="profile.html">My Profile</a></li>
         <li id="authLinks">
           <a href="login.html">Login</a>
@@ -83,6 +86,7 @@
         <div class="hero-actions">
           <a href="events.html" class="btn btn-large btn-primary">Explore Events</a>
           <a href="communities.html" class="btn btn-large btn-outline">Find Communities</a>
+          <a href="nearby-caregivers.html" class="btn btn-large btn-outline">Find Caregivers</a>
         </div>
       </div>
     </div>
@@ -101,7 +105,7 @@
 
   <section class="features">
     <div class="container">
-      <h2>Why Join Digital AI Buddy?</h2>
+      <h2>Why Join FAM?</h2>
       <div class="features-grid">
         <div class="feature-card">
           <h3>Discover Events</h3>
@@ -110,6 +114,10 @@
         <div class="feature-card">
           <h3>Join Communities</h3>
           <p>Connect with like-minded people in your area</p>
+        </div>
+        <div class="feature-card">
+          <h3>Find Caregivers</h3>
+          <p>Connect with trusted caregivers offering elderly care, babysitting, and more</p>
         </div>
         <div class="feature-card">
           <h3>Create Events</h3>
@@ -131,13 +139,113 @@
     </div>
   </section>
 
+  <!-- App Download Section -->
+  <section class="app-download-section">
+    <div class="container">
+      <div class="app-download-content">
+        <div class="app-info">
+          <h2>Download Our Mobile App</h2>
+          <p class="app-subtitle">Take FAM with you wherever you go</p>
+          
+          <div class="app-benefits">
+            <div class="benefit-item">
+              <span class="benefit-icon">📱</span>
+              <div>
+                <h4>Accessible Anywhere</h4>
+                <p>Stay connected on the go</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <span class="benefit-icon">🔔</span>
+              <div>
+                <h4>On-Time Updates</h4>
+                <p>Get instant notifications for events and messages</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <span class="benefit-icon">🔄</span>
+              <div>
+                <h4>Seamless Sync</h4>
+                <p>Scan QR code to sync your account instantly</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <span class="benefit-icon">⚡</span>
+              <div>
+                <h4>Fast & Smooth</h4>
+                <p>Optimized performance for mobile devices</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <span class="benefit-icon">🔒</span>
+              <div>
+                <h4>Secure & Private</h4>
+                <p>Your data is protected with top security</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-store-buttons">
+            <a href="#" class="store-button">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play">
+            </a>
+            <a href="#" class="store-button">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store">
+            </a>
+          </div>
+
+          <div class="qr-sync-section">
+            <button class="btn-qr-sync" onclick="showQRSync()">
+              <span>📲</span> Scan QR Code to Sync
+            </button>
+          </div>
+        </div>
+
+        <div class="app-mockup">
+          <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80" alt="Mobile App Preview">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QR Code Sync Modal -->
+  <div id="qrSyncModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+      <span class="close" onclick="closeQRSync()">&times;</span>
+      <h2 style="text-align: center; margin-bottom: 1rem;">Sync with Mobile App</h2>
+      <p style="text-align: center; color: var(--text-light); margin-bottom: 2rem;">
+        Scan this QR code with your mobile app to instantly sync your account
+      </p>
+      
+      <div class="qr-code-container">
+        <div id="qrCodeDisplay"></div>
+      </div>
+      
+      <div class="sync-instructions">
+        <h3>How to sync:</h3>
+        <ol>
+          <li>Open the FAM app on your mobile device</li>
+          <li>Tap on "Sync with Website" in the app menu</li>
+          <li>Point your camera at this QR code</li>
+          <li>Your account will sync automatically!</li>
+        </ol>
+      </div>
+      
+      <p style="text-align: center; color: var(--text-light); font-size: 0.9rem; margin-top: 1.5rem;">
+        🔒 Your sync token is encrypted and expires in 5 minutes
+      </p>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 Digital AI Buddy. All rights reserved.</p>
+      <p>&copy; 2026 FAM. All rights reserved.</p>
     </div>
   </footer>
 
   <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/qr-sync.js"></script>
+  <script src="js/chatbot.js"></script>
 </body>
 </html>

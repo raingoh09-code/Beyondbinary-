@@ -19,6 +19,8 @@ const eventRoutes = require('./routes/events');
 const communityRoutes = require('./routes/communities');
 const userRoutes = require('./routes/users');
 const studyGroupRoutes = require('./routes/study-groups');
+const caregiverRoutes = require('./routes/caregivers');
+const chatbotRoutes = require('./routes/chatbot');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -26,6 +28,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/study-groups', studyGroupRoutes);
+app.use('/api/caregivers', caregiverRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Serve frontend
 app.get('/', (req, res) => {

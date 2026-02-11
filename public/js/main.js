@@ -1,6 +1,6 @@
 // Main page functionality
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Digital AI Buddy loaded!');
+  console.log('FAM loaded!');
   initCompactMoodTracker();
   displayDailyQuote();
 });
@@ -417,4 +417,112 @@ function getLast7Days() {
   }
   
   return days;
+}
+
+// Load and display available caregivers on homepage
+async function loadHomepageCaregiv
+  const container = document.getElementById('caregiversList');
+  if (!container) return;
+
+  try {
+    const response = await fetch('http://localhost:3000/api/caregivers');
+    if (!response.ok) throw new Error('Failed to load caregivers');
+    
+    const caregivers = await response.json();
+    
+    // Display first 6 caregivers
+    const displayCaregivers = caregivers.slice(0, 6);
+    
+    if (displayCaregivers.length === 0) {
+      container.innerHTML = '<div class="loading-message">No caregivers available</div>';
+      return;
+    }
+    
+    container.innerHTML = displayCaregivers.map(caregiver => `
+      <div class="caregiver-card-home" onclick="window.location.href='caregiver-profile.html?id=${caregiver.id}'">
+        <div class="card-header">
+          <div class="avatar">${getInitials(caregiver.name)}</div>
+          <div class="info">
+            <h3>
+              ${caregiver.name}
+              ${caregiver.verified ? '<span class="verified">✓ Verified</span>' : ''}
+            </h3>
+            <div class="rating">
+              <span class="star">★</span>
+              <span>${caregiver.rating.toFixed(1)}</span>
+              <span>(${caregiver.reviews} reviews)</span>
+            </div>
+          </div>
+        </div>
+        
+        <p class="bio">${caregiver.bio}</p>
+        
+        <div class="services">
+          ${caregiver.services.slice(0, 2).map(service => 
+            `<span class="service-tag">${service}</span>`
+          ).join('')}
+          ${caregiver.services.length > 2 ? `<span class="service-tag">+${caregiver.services.length - 2} more</span>` : ''}
+        </div>
+        
+        <div class="details">
+          <div>
+            <div class="rate">$${caregiver.hourlyRate}/hr</div>
+            <div class="location-tag">📍 ${caregiver.location.area}</div>
+          </div>
+        </div>
+        
+        <button class="btn-message" onclick="event.stopPropagation(); contactCaregiver('${caregiver.id}', '${caregiver.name}')">
+          <svg fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+          </svg>
+          Message
+        </button>
+      </div>
+    `).join('');
+    
+  } catch (error) {
+    console.error('Error loading caregivers:', error);
+    container.innerHTML = '<div class="loading-message">Unable to load caregivers</div>';
+  }
+}
+
+function getInitials(name) {
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+async function contactCaregiver(caregiverId, caregiverName) {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    alert('Please login to contact caregivers');
+    window.location.href = 'login.
+    return;
+  }
+  
+  try {
+    const response = await fetch(`http://localhost:3000/api/caregivers/${caregiverId}/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      alert(`Contact Information for ${caregiverName}:\n\nEmail: ${data.contact.email}\nPhone: ${data.contact.phone}\n\nYou can reach out to them directly!`);
+    } else {
+      alert(data.message || 'Failed to get contact information');
+    }
+  } catch (error) {
+    console.error('Error contacting caregiver:', error);
+    alert('Failed to contact caregiver');
+  }
 }

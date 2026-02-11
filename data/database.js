@@ -5,12 +5,14 @@ const path = require('path');
 let users = [];
 let events = [];
 let communities = [];
+let caregivers = [];
 
 // File paths for persistence
 const dataDir = path.join(__dirname);
 const usersFile = path.join(dataDir, 'users.json');
 const eventsFile = path.join(dataDir, 'events.json');
 const communitiesFile = path.join(dataDir, 'communities.json');
+const caregiversFile = path.join(dataDir, 'caregivers.json');
 
 // Load data from files if they exist
 function loadData() {
@@ -24,6 +26,9 @@ function loadData() {
     if (fs.existsSync(communitiesFile)) {
       communities = JSON.parse(fs.readFileSync(communitiesFile, 'utf8'));
     }
+    if (fs.existsSync(caregiversFile)) {
+      caregivers = JSON.parse(fs.readFileSync(caregiversFile, 'utf8'));
+    }
   } catch (error) {
     console.error('Error loading data:', error);
   }
@@ -35,6 +40,7 @@ function saveData() {
     fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
     fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
     fs.writeFileSync(communitiesFile, JSON.stringify(communities, null, 2));
+    fs.writeFileSync(caregiversFile, JSON.stringify(caregivers, null, 2));
   } catch (error) {
     console.error('Error saving data:', error);
   }
@@ -46,6 +52,7 @@ loadData();
 module.exports = {
   users,
   events,
+  caregivers,
   communities,
   saveData
 };

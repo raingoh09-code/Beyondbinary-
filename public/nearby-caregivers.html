@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Caregivers - FAM</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <style>
+        .search-filters {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn-search {
+            background: #8C736F;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-search:hover {
+            background: #735d5a;
+            transform: translateY(-1px);
+        }
+
+        .caregivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .caregiver-card {
+            background: var(--card-bg);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .caregiver-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .caregiver-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .caregiver-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .caregiver-info h3 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-color);
+        }
+
+        .caregiver-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .star {
+            color: #d4af37;
+        }
+
+        .verified-badge {
+            display: inline-block;
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .caregiver-bio {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .services-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-tag {
+            background: rgba(201, 173, 167, 0.2);
+            color: var(--text-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .caregiver-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .rate {
+            font-weight: bold;
+            color: #8C736F;
+            font-size: 1.1rem;
+        }
+
+        .location {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .distance {
+            background: rgba(168, 186, 170, 0.3);
+            color: var(--text-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .btn-contact {
+            background: var(--success-color);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-contact:hover {
+            background: #97a899;
+            transform: translateY(-1px);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <img src="logo.png" alt="FAM Logo" class="logo">
+                <h1>FAM</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="communities.html">Communities</a></li>
+                <li><a href="nearby-caregivers.html" class="active">Caregivers</a></li>
+                <li id="profileLink" style="display: none;"><a href="profile.html">My Profile</a></li>
+                <li id="authLinks">
+                    <a href="login.html">Login</a>
+                    <a href="register.html">Sign Up</a>
+                </li>
+                <li id="userLinks" style="display: none;">
+                    <a href="create-event.html">Create Event</a>
+                    <a href="#" id="logoutBtn">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container">
+            <h2>🤝 Nearby Caregivers</h2>
+            <p>Find trusted caregivers in your area</p>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="container">
+            <div class="search-filters">
+                <div class="filter-group">
+                    <input type="text" id="areaFilter" placeholder="Search by area (e.g., Tampines)">
+                    <select id="serviceFilter">
+                        <option value="">All Services</option>
+                        <option value="Elderly Care">Elderly Care</option>
+                        <option value="Babysitting">Babysitting</option>
+                        <option value="Child Care">Child Care</option>
+                        <option value="Medical Care">Medical Care</option>
+                        <option value="Dementia Care">Dementia Care</option>
+                        <option value="Special Needs Support">Special Needs Support</option>
+                        <option value="Companionship">Companionship</option>
+                    </select>
+                    <select id="ratingFilter">
+                        <option value="">All Ratings</option>
+                        <option value="4.5">4.5+ Stars</option>
+                        <option value="4.0">4.0+ Stars</option>
+                        <option value="3.5">3.5+ Stars</option>
+                    </select>
+                </div>
+                <button class="btn-search" onclick="searchCaregivers()">Search Caregivers</button>
+            </div>
+
+            <div id="loadingSpinner" class="loading" style="display: none;">
+                Loading caregivers...
+            </div>
+
+            <div id="caregiversContainer" class="caregivers-grid"></div>
+        </div>
+    </section>
+
+    <script src="js/auth.js"></script>
+    <script src="js/caregivers.js"></script>
+    <script src="js/chatbot.js"></script>
+</body>
+</html>
