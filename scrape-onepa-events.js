@@ -3,7 +3,8 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-const ONEPA_URL = 'https://www.onepa.gov.sg/events/search?events=&aoi=Competitions&sort=rel';
+const ONEPA_API_URL = 'https://www.onepa.gov.sg/pacesapi/eventsearch/searchjson?aoi=Active%20Ageing&sort=rel';
+const ONEPA_URL = 'https://www.onepa.gov.sg/events/search?events=&aoi=Active%20Ageing&sort=rel';
 
 // Category mapping from OnePA to our system
 const categoryMap = {
@@ -20,77 +21,129 @@ const categoryMap = {
 
 async function scrapeOnepaEvents() {
   try {
-    console.log('🔍 Fetching events from OnePA...');
+    console.log('🔍 Fetching events from OnePA API...');
     
-    const response = await axios.get(ONEPA_URL, {
+    const response = await axios.get(ONEPA_API_URL, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json'
       }
     });
 
-    console.log('✅ Page fetched successfully');
+    console.log('✅ Data fetched successfully');
     
-    const $ = cheerio.load(response.data);
     const events = [];
     let eventId = Date.now();
-
-    // Try to find event cards/items on the page
-    // This selector may need adjustment based on the actual HTML structure
-    $('.event-item, .event-card, article, .result-item').each((index, element) => {
-      try {
-        const $event = $(element);
-        
-        // Extract event information (these selectors may need adjustment)
-        const title = $event.find('h2, h3, .title, .event-title').first().text().trim();
-        const description = $event.find('p, .description, .event-description').first().text().trim() || 
-                          $event.find('.excerpt, .summary').first().text().trim();
-        const dateText = $event.find('.date, .event-date, time').first().text().trim();
-        const location = $event.find('.location, .venue, .event-location').first().text().trim();
-        const link = $event.find('a').first().attr('href');
-
-        if (title) {
-          // Parse date (this is a basic implementation and may need adjustment)
-          const date = parseDate(dateText);
-          
-          events.push({
-            id: `onepa-${eventId++}`,
-            title: title,
-            description: description || 'Join us for this exciting community event!',
-            date: date.dateStr || '2026-02-15',
-            time: date.timeStr || '14:00',
-            location: location || 'Singapore',
-            category: 'Sports', // Competitions category
-            maxAttendees: null,
-            organizerId: 'onepa-singapore',
-            attendees: [],
-            coordinates: getSingaporeCoordinates(location),
-            imageUrl: getDefaultImage('Health'),
-            externalUrl: link ? (link.startsWith('http') ? link : `https://www.onepa.gov.sg${link}`) : ONEPA_URL,
-            createdAt: new Date().toISOString()
-          });
-        }
-      } catch (err) {
-        console.log(`⚠️  Error parsing event ${index + 1}:`, err.message);
-      }
-    });
-
-    if (events.length === 0) {
-      console.log('⚠️  No events found with current selectors. The page structure may have changed.');
-      console.log('Creating sample Competition events instead...');
-      return createSampleCompetitionEvents();
+    
+    // Check if we got valid JSON data
+    if (!response.data || !response.data.data || !response.data.data.results) {
+      console.log('⚠️  No events data found in API response');
+      return createSampleActiveAgeingEvents();
     }
 
-    console.log(`✅ Successfully scraped ${events.length} events`);
+    const onepaEvents = response.data.data.results;
+    console.log(`📋 Found ${onepaEvents.length} events from OnePA`);
+
+    // Process each event from the API
+    for (const onepaEvent of onepaEvents) {
+      try {
+        const title = onepaEvent.title || 'Untitled Event';
+        const description = onepaEvent.description || `Join us at ${onepaEvent.outlet} for this Active Ageing event!`;
+        const location = onepaEvent.outlet || 'Singapore';
+        const link = onepaEvent.productUrl ? `https://www.onepa.gov.sg${onepaEvent.productUrl}` : ONEPA_URL;
+        
+        // Parse date from startDate (e.g., "02 Sep 2025 - 25 Aug 2026" or "22 Mar 2026")
+        const dateInfo = parseOnePADate(onepaEvent.startDate, onepaEvent.sessionTime);
+        const price = onepaEvent.minPrice || 0;
+        
+        events.push({
+          id: `onepa-${eventId++}`,
+          title: title,
+          description: description,
+          date: dateInfo.dateStr,
+          time: dateInfo.timeStr,
+          location: location,
+          category: 'Health', // Active Ageing category maps to Health
+          maxAttendees: onepaEvent.totalVacancies > 0 ? onepaEvent.totalVacancies : null,
+          organizerId: onepaEvent.outletId || 'onepa-singapore',
+          attendees: [],
+          coordinates: getSingaporeCoordinates(location),
+          imageUrl: getActiveAgeingImage(title),
+          externalUrl: link,
+          price: price,
+          createdAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.log(`⚠️  Error parsing event: ${err.message}`);
+      }
+    }
+
+    if (events.length === 0) {
+      console.log('⚠️  No events could be parsed from API response');
+      console.log('Creating sample Active Ageing events instead...');
+      return createSampleActiveAgeingEvents();
+    }
+
+    console.log(`✅ Successfully processed ${events.length} events`);
     return events;
 
   } catch (error) {
-    console.error('❌ Error scraping OnePA:', error.message);
-    console.log('Creating sample Competition events instead...');
-    return createSampleCompetitionEvents();
+    console.error('❌ Error fetching from OnePA API:', error.message);
+    console.log('Creating sample Active Ageing events instead...');
+    return createSampleActiveAgeingEvents();
   }
 }
 
-// Helper function to parse dates
+// Helper function to parse OnePA date format
+function parseOnePADate(startDateStr, sessionTime) {
+  if (!startDateStr) {
+    return { dateStr: '2026-02-15', timeStr: '14:00' };
+  }
+
+  try {
+    // Handle date ranges like "02 Sep 2025 - 25 Aug 2026" - take the first date
+    const firstDatePart = startDateStr.split(' - ')[0].trim();
+    
+    // Parse date like "22 Mar 2026" or "02 Sep 2025"
+    const parts = firstDatePart.split(' ');
+    if (parts.length >= 3) {
+      const day = parts[0].padStart(2, '0');
+      const monthMap = {
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+      };
+      const month = monthMap[parts[1]] || '01';
+      const year = parts[2];
+      
+      const dateStr = `${year}-${month}-${day}`;
+      
+      // Parse time from sessionTime like "7:30 PM - 9:30 PM" - take start time
+      let timeStr = '14:00';
+      if (sessionTime) {
+        const timeMatch = sessionTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (timeMatch) {
+          let hours = parseInt(timeMatch[1]);
+          const minutes = timeMatch[2];
+          const ampm = timeMatch[3].toUpperCase();
+          
+          if (ampm === 'PM' && hours !== 12) hours += 12;
+          if (ampm === 'AM' && hours === 12) hours = 0;
+          
+          timeStr = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+      }
+      
+      return { dateStr, timeStr };
+    }
+  } catch (err) {
+    console.log(`⚠️  Error parsing date: ${err.message}`);
+  }
+  
+  return { dateStr: '2026-02-15', timeStr: '14:00' };
+}
+
+// Old HTML parsing function - kept for reference but not used
 function parseDate(dateText) {
   if (!dateText) return { dateStr: '2026-02-15', timeStr: '14:00' };
   
@@ -124,14 +177,38 @@ function parseDate(dateText) {
   return { dateStr, timeStr };
 }
 
-// Helper function to get Singapore coordinates
+// Helper function to get Singapore coordinates based on location
 function getSingaporeCoordinates(location) {
   const locationMap = {
-    'jurong': { lat: 1.3404, lng: 103.7090 },
-    'tampines': { lat: 1.3496, lng: 103.9568 },
+    // North
     'woodlands': { lat: 1.4382, lng: 103.7891 },
-    'bedok': { lat: 1.3236, lng: 103.9273 },
+    'admiralty': { lat: 1.4404, lng: 103.8009 },
     'yishun': { lat: 1.4304, lng: 103.8354 },
+    
+    // North-East
+    'yew tee': { lat: 1.3969, lng: 103.7474 },
+    'choa chu kang': { lat: 1.3840, lng: 103.7470 },
+    
+    // Central
+    'bishan': { lat: 1.3526, lng: 103.8352 },
+    'toa payoh': { lat: 1.3343, lng: 103.8467 },
+    'ang mo kio': { lat: 1.3691, lng: 103.8454 },
+    'cheng san': { lat: 1.3691, lng: 103.8454 }, // Ang Mo Kio area
+    
+    // East
+    'tampines': { lat: 1.3496, lng: 103.9568 },
+    'bedok': { lat: 1.3236, lng: 103.9273 },
+    'marine terrace': { lat: 1.3042, lng: 103.9142 },
+    'marine parade': { lat: 1.3042, lng: 103.9142 },
+    
+    // West
+    'jurong': { lat: 1.3404, lng: 103.7090 },
+    'clementi': { lat: 1.3162, lng: 103.7649 },
+    
+    // South
+    'tanglin': { lat: 1.3048, lng: 103.8131 },
+    'radin mas': { lat: 1.2756, lng: 103.8197 },
+    
     'default': { lat: 1.3521, lng: 103.8198 }
   };
   
@@ -145,7 +222,68 @@ function getSingaporeCoordinates(location) {
   return locationMap.default;
 }
 
-// Helper function to get default images by category
+// Helper function to get relevant images for Active Ageing events
+function getActiveAgeingImage(title) {
+  const titleLower = title.toLowerCase();
+  
+  // Match image based on activity type
+  if (titleLower.includes('dance') || titleLower.includes('fitness')) {
+    return 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400'; // Seniors dancing/exercise
+  } else if (titleLower.includes('eye') || titleLower.includes('screening') || titleLower.includes('health')) {
+    return 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400'; // Health checkup
+  } else if (titleLower.includes('tai chi') || titleLower.includes('yoga') || titleLower.includes('stretch')) {
+    return 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=400'; // Tai chi/yoga
+  } else if (titleLower.includes('singing') || titleLower.includes('karaoke') || titleLower.includes('music') || titleLower.includes('band')) {
+    return 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400'; // Music/singing
+  } else if (titleLower.includes('pool') || titleLower.includes('billiard')) {
+    return 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400'; // Pool table
+  } else if (titleLower.includes('bowl') || titleLower.includes('lawn bowl')) {
+    return 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=400'; // Lawn bowls
+  } else if (titleLower.includes('digital') || titleLower.includes('computer') || titleLower.includes('tech')) {
+    return 'https://images.unsplash.com/photo-1488751045188-3c55bbf9a3fa?w=400'; // Seniors learning tech
+  } else if (titleLower.includes('walk') || titleLower.includes('outdoor') || titleLower.includes('park')) {
+    return 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=400'; // Outdoor activities
+  } else {
+    // Default image for general Active Ageing activities
+    return 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=400'; // Seniors socializing
+  }
+}
+
+// Helper function to get default images by category (backup)
+// Get contextually relevant image based on event title
+function getContextualImage(title) {
+  const titleLower = title.toLowerCase();
+  
+  // Check for specific activity keywords
+  if (titleLower.includes('dance') || titleLower.includes('zumba')) {
+    return 'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=400'; // Senior dancing
+  }
+  if (titleLower.includes('yoga') || titleLower.includes('tai chi')) {
+    return 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=400'; // Yoga/Tai Chi
+  }
+  if (titleLower.includes('sing') || titleLower.includes('karaoke') || titleLower.includes('music')) {
+    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'; // Singing/Music
+  }
+  if (titleLower.includes('pool') || titleLower.includes('billiard')) {
+    return 'https://images.unsplash.com/photo-1625239110983-7f23374a9d5e?w=400'; // Pool/Billiards
+  }
+  if (titleLower.includes('lawn bowl') || titleLower.includes('bowling')) {
+    return 'https://images.unsplash.com/photo-1511909525232-61113c912358?w=400'; // Lawn bowls
+  }
+  if (titleLower.includes('eye') || titleLower.includes('screening') || titleLower.includes('health check')) {
+    return 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400'; // Health screening
+  }
+  if (titleLower.includes('digital') || titleLower.includes('tech') || titleLower.includes('computer')) {
+    return 'https://images.unsplash.com/photo-1488998427799-e3362cec87c3?w=400'; // Digital learning
+  }
+  if (titleLower.includes('fitness') || titleLower.includes('exercise') || titleLower.includes('workout')) {
+    return 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400'; // Senior fitness
+  }
+  
+  // Default health/senior community image
+  return 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=400';
+}
+
 function getDefaultImage(category) {
   const images = {
     'Health': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400',
@@ -157,71 +295,74 @@ function getDefaultImage(category) {
   return images[category] || images['Social'];
 }
 
-// Create sample Competition events if scraping fails
-function createSampleCompetitionEvents() {
+// Create sample Active Ageing events if scraping fails
+function createSampleActiveAgeingEvents() {
   const baseId = Date.now();
   return [
     {
       id: `onepa-${baseId + 1}`,
-      title: 'Community Futsal Championship',
-      description: 'Join the annual futsal tournament! Teams compete for the championship trophy. All skill levels welcome.',
-      date: '2026-02-25',
-      time: '14:00',
-      location: 'Toa Payoh Sports Hall, Singapore',
-      category: 'Sports',
-      maxAttendees: 100,
+      title: 'Senior Dance Fitness Class',
+      description: 'Stay active and healthy with our fun dance fitness class designed for seniors. No experience needed!',
+      date: '2026-02-20',
+      time: '09:00',
+      location: 'Bishan Community Club, Singapore',
+      category: 'Health',
+      maxAttendees: 30,
       organizerId: 'onepa-singapore',
       attendees: [],
-      coordinates: { lat: 1.3343, lng: 103.8467 },
-      imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400',
+      coordinates: { lat: 1.3644, lng: 103.8470 },
+      imageUrl: getActiveAgeingImage('Senior Dance Fitness Class'),
       externalUrl: ONEPA_URL,
+      price: 0,
       createdAt: new Date().toISOString()
     },
     {
       id: `onepa-${baseId + 2}`,
-      title: 'Inter-Community Badminton Tournament',
-      description: 'Showcase your badminton skills in this exciting inter-community tournament. Singles and doubles categories available.',
-      date: '2026-03-01',
-      time: '09:00',
-      location: 'Jurong West Sports Centre, Singapore',
-      category: 'Sports',
-      maxAttendees: 80,
+      title: 'Healthy Ageing Workshop',
+      description: 'Learn about nutrition, exercise, and mental wellness for healthy ageing. Free health screening included.',
+      date: '2026-02-22',
+      time: '14:00',
+      location: 'Toa Payoh Community Club, Singapore',
+      category: 'Health',
+      maxAttendees: 50,
       organizerId: 'onepa-singapore',
       attendees: [],
-      coordinates: { lat: 1.3404, lng: 103.7090 },
-      imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400',
+      coordinates: { lat: 1.3343, lng: 103.8467 },
+      imageUrl: getActiveAgeingImage('Healthy Ageing Workshop'),
       externalUrl: ONEPA_URL,
+      price: 5,
       createdAt: new Date().toISOString()
     },
     {
       id: `onepa-${baseId + 3}`,
-      title: 'Community Photography Contest',
-      description: 'Capture the beauty of Singapore! Submit your best photos for a chance to win amazing prizes. Theme: Community Spirit.',
-      date: '2026-02-28',
-      time: '10:00',
-      location: 'Bishan Community Club, Singapore',
-      category: 'Arts',
-      maxAttendees: 50,
+      title: 'Morning Tai Chi for Seniors',
+      description: 'Join us for a peaceful morning of Tai Chi practice. Improve flexibility, balance, and inner peace.',
+      date: '2026-02-25',
+      time: '07:30',
+      location: 'Ang Mo Kio Central Park, Singapore',
+      category: 'Health',
+      maxAttendees: 40,
       organizerId: 'onepa-singapore',
       attendees: [],
-      coordinates: { lat: 1.3644, lng: 103.8470 },
-      imageUrl: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400',
+      coordinates: { lat: 1.3700, lng: 103.8462 },
+      imageUrl: getActiveAgeingImage('Morning Tai Chi for Seniors'),
       externalUrl: ONEPA_URL,
+      price: 0,
       createdAt: new Date().toISOString()
     },
     {
       id: `onepa-${baseId + 4}`,
-      title: 'Table Tennis Open Championship',
-      description: 'Test your ping pong prowess! Open to all ages and skill levels. Prizes for champions in each category.',
-      date: '2026-03-05',
-      time: '15:00',
-      location: 'Tampines ActiveSG Centre, Singapore',
-      category: 'Sports',
-      maxAttendees: 60,
+      title: 'Silver Yoga Class',
+      description: 'Gentle yoga sessions tailored for older adults. Enhance mobility and reduce stress.',
+      date: '2026-03-01',
+      time: '10:00',
+      location: 'Tampines Community Club, Singapore',
+      category: 'Health',
+      maxAttendees: 25,
       organizerId: 'onepa-singapore',
       attendees: [],
       coordinates: { lat: 1.3496, lng: 103.9568 },
-      imageUrl: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=400',
+      imageUrl: getActiveAgeingImage('Silver Yoga Class'),
       externalUrl: ONEPA_URL,
       createdAt: new Date().toISOString()
     },

@@ -481,10 +481,19 @@ function showMapSetupInstructions() {
 
 // Display events on map
 function displayEventsOnMap(events) {
+  console.log('displayEventsOnMap called with', events.length, 'events');
+  
   if (!map) {
-    console.log('Map not initialized');
-    showMapSetupInstructions();
-    return;
+    console.log('Map not initialized, attempting to initialize...');
+    if (typeof google !== 'undefined' && google.maps) {
+      initMap();
+      setTimeout(() => displayEventsOnMap(events), 1000);
+      return;
+    } else {
+      console.log('Google Maps not available');
+      showMapSetupInstructions();
+      return;
+    }
   }
 
   // Clear existing markers
@@ -496,6 +505,7 @@ function displayEventsOnMap(events) {
     return;
   }
 
+  console.log('Adding markers for', events.length, 'events');
   const bounds = new google.maps.LatLngBounds();
 
   // Add markers for events
@@ -582,6 +592,18 @@ function displayEventsOnMap(events) {
 function updateNearbyEventsList(events) {
   const listElement = document.getElementById('nearbyEventsList');
   
+  // Element removed from UI, skip update
+  if (!listElement) {
+    return;
+  }
+  
+  const infoContainer = document.querySelector('.map-events-info');
+  
+  // Show the info container
+  if (infoContainer) {
+    infoContainer.style.display = 'block';
+  }
+  
   // Calculate distances if user location available
   if (userLocation && typeof google !== 'undefined' && google.maps) {
     events.forEach(event => {
@@ -630,13 +652,14 @@ function getCategoryColor(category) {
 }
 
 // Focus on event marker
-function focusEventOnMap(index) {
+// Focus on event marker when clicked from sidebar
+window.focusEventOnMap = function(index) {
   if (markers[index]) {
     map.setZoom(14);
     map.panTo(markers[index].getPosition());
     google.maps.event.trigger(markers[index], 'click');
   }
-}
+};
 
 // Switch between list and map views
 window.switchView = function(view) {
