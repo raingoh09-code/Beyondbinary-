@@ -12,7 +12,7 @@ const motivationalQuotes = [
   "When you stop trying to make everything perfect, you might find that it already is.",
   "Success is a series of small wins.",
   "Never quieten your imagination.",
-  "In every day there are 1440 minutes. That means we have 1440 daily opportunities to make a positive impact." — Les Brown",
+  "In every day there are 1440 minutes. That means we have 1440 daily opportunities to make a positive impact. - Les Brown",
   "Focus on being productive instead of busy.",
   "Hard work beats talent when talent doesn't work hard."
 ];
@@ -82,6 +82,13 @@ function initCompactMoodTracker() {
 function displayWeeklyMoodSummary() {
   const moods = JSON.parse(localStorage.getItem('moodTracker') || '[]');
   console.log('Displaying weekly mood summary. Total moods:', moods.length);
+  console.log('Mood data:', moods);
+  
+  // Get all the day elements
+  const weekDays = document.querySelectorAll('.weekly-mood-day');
+  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  
+  console.log('Found week day elements:', weekDays.length);
   
   // Get the last 7 days starting from Sunday
   const today = new Date();
@@ -97,25 +104,30 @@ function displayWeeklyMoodSummary() {
     const dateKey = dayDate.toISOString().split('T')[0];
     
     const moodEntry = moods.find(m => m.date === dateKey);
-    const emojiElement = dayElement.querySelector('.day-emoji');
+    const displayElement = dayElement.querySelector('.day-display');
     
-    console.log(`Day ${index} (${dateKey}):`, moodEntry ? moodEntry.emoji : 'no mood
-    const moodEntry = moods.find(m => m.date === dateKey);
-    const emojiElement = dayElement.querySelector('.day-emoji');
+    console.log(`Day ${index} (${dateKey}):`, moodEntry ? moodEntry.emoji : 'no mood', 'Element:', displayElement);
     
-    if (moodEntry) {
-      emojiElement.textContent = moodEntry.emoji;
-      dayElement.classList.add('has-mood');
+    if (displayElement) {
+      if (moodEntry) {
+        // Show emoji instead of day letter
+        displayElement.textContent = moodEntry.emoji;
+        dayElement.classList.add('has-mood');
+        console.log(`Set emoji ${moodEntry.emoji} for day ${index}`);
+      } else {
+        // Show day letter
+        displayElement.textContent = dayLetters[index];
+        dayElement.classList.remove('has-mood');
+      }
+      
+      // Highlight today
+      if (index === currentDayOfWeek) {
+        dayElement.classList.add('today');
+      } else {
+        dayElement.classList.remove('today');
+      }
     } else {
-      emojiElement.textContent = '-';
-      dayElement.classList.remove('has-mood');
-    }
-    
-    // Highlight today
-    if (index === currentDayOfWeek) {
-      dayElement.classList.add('today');
-    } else {
-      dayElement.classList.remove('today');
+      console.error(`No display element found for day ${index}`);
     }
   });
 }
@@ -152,6 +164,8 @@ function saveMood(mood, emoji) {
   const today = new Date();
   const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format
   
+  console.log('Saving mood:', mood, 'Emoji:', emoji, 'Date:', dateKey);
+  
   // Get existing moods
   let moods = JSON.parse(localStorage.getItem('moodTracker') || '[]');
   
@@ -159,14 +173,17 @@ function saveMood(mood, emoji) {
   const existingIndex = moods.findIndex(m => m.date === dateKey);
   if (existingIndex >= 0) {
     moods[existingIndex] = { date: dateKey, mood, emoji, timestamp: today.toISOString() };
+    console.log('Updated existing mood for today');
   } else {
     moods.push({ date: dateKey, mood, emoji, timestamp: today.toISOString() });
+    console.log('Added new mood for today');
   }
   
   // Keep only last 30 days
   moods = moods.slice(-30);
   
   localStorage.setItem('moodTracker', JSON.stringify(moods));
+  console.log('Mood saved to localStorage. Total moods:', moods.length);
 }
 
 function displayMoodHistory() {

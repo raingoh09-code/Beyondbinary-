@@ -117,13 +117,13 @@ function displayEvents(events) {
         <div class="event-body">
           <div class="event-info">
             <div class="event-info-item">
-              📅 ${formatDate(event.date)}
+              ${formatDate(event.date)}
             </div>
             <div class="event-info-item">
-              🕐 ${event.time}
+              ${event.time}
             </div>
             <div class="event-info-item">
-              📍 ${event.location}
+              ${event.location}
             </div>
           </div>
           <p class="event-description">${event.description}</p>
@@ -135,7 +135,7 @@ function displayEvents(events) {
                   Register Now
                 </button>`) :
               `<span class="attendees-count">
-                👥 ${event.attendees.length}${event.maxAttendees ? ' / ' + event.maxAttendees : ''} attending
+                ${event.attendees.length}${event.maxAttendees ? ' / ' + event.maxAttendees : ''} attending
               </span>`
             }
             ${!isExternal && isLoggedIn() && !hasRSVPd ? 
@@ -215,6 +215,84 @@ function viewEvent(eventId) {
   console.log('View event:', eventId);
 }
 
+// Show event details from map popup
+function showEventDetailsFromMap(eventId) {
+  // Close the info window
+  if (infoWindow) {
+    infoWindow.close();
+  }
+  
+  // Find the event
+  const event = allEvents.find(e => e.id === eventId);
+  if (!event) {
+    alert('Event not found');
+    return;
+  }
+  
+  // For external events, use the booking modal
+  if (event.externalUrl) {
+    bookExternalEvent(eventId, event.externalUrl);
+    return;
+  }
+  
+  // For regular events, show details in modal
+  if (!isLoggedIn()) {
+    if (confirm('Please login to view event details and RSVP. Go to login page?')) {
+      window.location.href = 'login.html';
+    }
+    return;
+  }
+  
+  const userInfo = getUserInfo();
+  const hasRSVPd = userInfo && event.attendees.includes(userInfo.id);
+  
+  // Populate modal with event details
+  const modalEventDetails = document.getElementById('modalEventDetails');
+  modalEventDetails.innerHTML = `
+    <h3>${event.title}</h3>
+    <div class="modal-detail-item"><strong>Date:</strong> ${formatDate(event.date)}</div>
+    <div class="modal-detail-item"><strong>Time:</strong> ${event.time}</div>
+    <div class="modal-detail-item"><strong>Location:</strong> ${event.location}</div>
+    <div class="modal-detail-item"><strong>Category:</strong> ${event.category}</div>
+    <div class="modal-detail-item"><strong>Description:</strong> ${event.description}</div>
+    ${event.maxAttendees ? `<div class="modal-detail-item"><strong>Max Attendees:</strong> ${event.maxAttendees}</div>` : ''}
+    <div class="modal-detail-item"><strong>Currently Attending:</strong> ${event.attendees.length} ${event.attendees.length === 1 ? 'person' : 'people'}</div>
+    ${hasRSVPd ? '<div class="modal-detail-item" style="color: var(--success-color); font-weight: 600;">✓ You have RSVP\'d to this event</div>' : ''}
+  `;
+  
+  // Populate modal with user details
+  const modalUserDetails = document.getElementById('modalUserDetails');
+  modalUserDetails.innerHTML = `
+    <h3>Your Details</h3>
+    <div class="modal-detail-item"><strong>Name:</strong> ${userInfo.name}</div>
+    <div class="modal-detail-item"><strong>Email:</strong> ${userInfo.email}</div>
+  `;
+  
+  // Update button
+  const confirmBtn = document.getElementById('confirmRegistrationBtn');
+  if (hasRSVPd) {
+    confirmBtn.style.display = 'none';
+  } else {
+    confirmBtn.style.display = 'inline-block';
+    confirmBtn.textContent = 'RSVP to Event';
+    confirmBtn.onclick = async () => {
+      try {
+        await apiRequest(`/events/${eventId}/rsvp`, {
+          method: 'POST'
+        });
+        alert('RSVP successful!');
+        closeBookingModal();
+        await loadEvents();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+  }
+  
+  // Show the modal
+  document.getElementById('bookingModal').style.display = 'block';
+}
+
 // RSVP to event
 async function rsvpEvent(eventId) {
   if (!isLoggedIn()) {
@@ -261,19 +339,19 @@ async function bookExternalEvent(eventId, externalUrl) {
   const modalEventDetails = document.getElementById('modalEventDetails');
   modalEventDetails.innerHTML = `
     <h3>${event.title}</h3>
-    <div class="modal-detail-item">📅 <strong>Date:</strong> ${formatDate(event.date)}</div>
-    <div class="modal-detail-item">🕐 <strong>Time:</strong> ${event.time}</div>
-    <div class="modal-detail-item">📍 <strong>Location:</strong> ${event.location}</div>
-    <div class="modal-detail-item">🏷️ <strong>Category:</strong> ${event.category}</div>
-    ${event.maxAttendees ? `<div class="modal-detail-item">👥 <strong>Max Attendees:</strong> ${event.maxAttendees}</div>` : ''}
+    <div class="modal-detail-item"><strong>Date:</strong> ${formatDate(event.date)}</div>
+    <div class="modal-detail-item"><strong>Time:</strong> ${event.time}</div>
+    <div class="modal-detail-item"><strong>Location:</strong> ${event.location}</div>
+    <div class="modal-detail-item"><strong>Category:</strong> ${event.category}</div>
+    ${event.maxAttendees ? `<div class="modal-detail-item"><strong>Max Attendees:</strong> ${event.maxAttendees}</div>` : ''}
   `;
   
   // Populate modal with user details
   const modalUserDetails = document.getElementById('modalUserDetails');
   modalUserDetails.innerHTML = `
     <h3>Your Details</h3>
-    <div class="modal-detail-item">👤 <strong>Name:</strong> ${userInfo.name}</div>
-    <div class="modal-detail-item">📧 <strong>Email:</strong> ${userInfo.email}</div>
+    <div class="modal-detail-item"><strong>Name:</strong> ${userInfo.name}</div>
+    <div class="modal-detail-item"><strong>Email:</strong> ${userInfo.email}</div>
   `;
   
   // Show the modal
@@ -386,7 +464,7 @@ function showMapSetupInstructions() {
   const mapView = document.getElementById('mapView');
   mapView.innerHTML = `
     <div style="padding: 40px; text-align: center; background: white; border-radius: 8px; margin: 20px;">
-      <h3 style="color: var(--primary-color); margin-bottom: 20px;">🗺️ Google Maps Setup Required</h3>
+      <h3 style="color: var(--primary-color); margin-bottom: 20px;">Google Maps Setup Required</h3>
       <p style="color: #666; margin-bottom: 20px;">To use the map view, you need to add your Google Maps API key.</p>
       <div style="text-align: left; max-width: 600px; margin: 0 auto; background: #f5f5f5; padding: 20px; border-radius: 4px;">
         <p style="font-weight: bold; margin-bottom: 10px;">Steps:</p>
@@ -450,16 +528,44 @@ function displayEventsOnMap(events) {
     // Add click listener
     marker.addListener('click', () => {
       const contentString = `
-        <div style="max-width: 300px;">
-          <h3 style="margin: 0 0 10px 0;">${event.title}</h3>
-          <p><strong>📅</strong> ${formatDate(event.date)} at ${event.time}</p>
-          <p><strong>📍</strong> ${event.location}</p>
-          <p><strong>🏷️</strong> ${event.category}</p>
-          <p>${event.description}</p>
+        <div style="max-width: 300px; padding: 10px;">
+          <h3 style="margin: 0 0 10px 0; color: var(--primary-brown);">${event.title}</h3>
+          <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(event.date)} at ${event.time}</p>
+          <p style="margin: 5px 0;"><strong>Location:</strong> ${event.location}</p>
+          <p style="margin: 5px 0;"><strong>Category:</strong> ${event.category}</p>
+          <p style="margin: 10px 0; font-size: 14px;">${event.description.length > 100 ? event.description.substring(0, 100) + '...' : event.description}</p>
+          <button 
+            id="map-details-btn-${event.id}"
+            style="
+              background-color: #8C736F;
+              color: #FFFFFF;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 5px;
+              cursor: pointer;
+              font-weight: 600;
+              margin-top: 10px;
+              width: 100%;
+            "
+            onmouseover="this.style.backgroundColor='#492620'"
+            onmouseout="this.style.backgroundColor='#8C736F'"
+          >
+            View Details & Register
+          </button>
         </div>
       `;
       infoWindow.setContent(contentString);
       infoWindow.open(map, marker);
+      
+      // Attach click listener after InfoWindow DOM is ready
+      google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+        const btn = document.getElementById(`map-details-btn-${event.id}`);
+        if (btn) {
+          btn.addEventListener('click', () => {
+            showEventDetailsFromMap(event.id);
+          });
+        }
+      });
     });
   });
 
@@ -500,7 +606,7 @@ function updateNearbyEventsList(events) {
           <h4 style="margin: 0; font-size: 14px;">${event.title}</h4>
           <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">
             ${event.time} • ${event.location}
-            ${event.distance ? `<br>📍 ${event.distance} km away` : ''}
+            ${event.distance ? `<br>${event.distance} km away` : ''}
           </p>
         </div>
       </div>

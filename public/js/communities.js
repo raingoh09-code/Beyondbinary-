@@ -17,7 +17,7 @@ function displayCommunities(communities) {
   const container = document.getElementById('communitiesContainer');
   
   if (communities.length === 0) {
-    container.innerHTML = '<p class="loading">No communities found</p>';
+    container.innerHTML = '';
     return;
   }
   
@@ -27,7 +27,7 @@ function displayCommunities(communities) {
       <span class="community-category">${community.category}</span>
       <p class="community-description">${community.description}</p>
       <div class="community-footer">
-        <span class="members-count">👥 ${community.members.length} members</span>
+        <span class="members-count">${community.members.length} members</span>
         ${isLoggedIn() ? `
           ${community.members.includes(getUserInfo()?.id) 
             ? `<button class="btn btn-outline" onclick="leaveCommunity('${community.id}')">Leave</button>`
@@ -36,7 +36,7 @@ function displayCommunities(communities) {
         ` : '<button class="btn btn-primary" onclick="location.href=\'login.html\'">Login to Join</button>'}
       </div>
       <div class="event-info-item" style="margin-top: 1rem">
-        📍 ${community.location}
+        ${community.location}
       </div>
     </div>
   `).join('');

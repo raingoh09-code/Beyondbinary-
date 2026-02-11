@@ -18,12 +18,14 @@ const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const communityRoutes = require('./routes/communities');
 const userRoutes = require('./routes/users');
+const studyGroupRoutes = require('./routes/study-groups');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/study-groups', studyGroupRoutes);
 
 // Serve frontend
 app.get('/', (req, res) => {

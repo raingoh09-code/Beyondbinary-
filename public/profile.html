@@ -19,8 +19,8 @@
         <li><a href="communities.html">Communities</a></li>
         <li><a href="profile.html" class="active">My Profile</a></li>
         <li id="userLinks">
-          <a href="create-event.html" class="btn btn-primary">Create Event</a>
-          <a href="#" id="logoutBtn" class="btn btn-outline">Logout</a>
+          <a href="create-event.html">Create Event</a>
+          <a href="#" id="logoutBtn">Logout</a>
         </li>
       </ul>
     </div>
@@ -40,8 +40,8 @@
         <div class="profile-sidebar">
           <div class="profile-info-card">
             <div class="profile-info-header">
-              <h3>👤 Profile Information</h3>
-              <button class="btn btn-outline btn-sm" onclick="toggleEditProfile()">✏️ Edit</button>
+              <h3>Profile Information</h3>
+              <button class="btn btn-outline btn-sm" onclick="toggleEditProfile()">Edit</button>
             </div>
             
             <div id="profileInfoDisplay" class="profile-info-display">
@@ -103,6 +103,52 @@
               <span class="stat-label">Communities</span>
             </div>
           </div>
+
+          <!-- Mood Trend Graph -->
+          <div class="mood-trend-card">
+            <div class="mood-trend-header">
+              <h3>Mood Over Time</h3>
+              <div class="mood-view-toggle">
+                <button class="mood-view-btn active" data-view="monthly" onclick="switchMoodView(this, 'monthly')">Monthly</button>
+                <button class="mood-view-btn" data-view="daily" onclick="switchMoodView(this, 'daily')">Daily</button>
+              </div>
+            </div>
+            <div class="mood-navigation">
+              <button class="mood-nav-btn" id="moodPrevBtn" onclick="navigateMoodPeriod(-1)">‹</button>
+              <div class="mood-period-label" id="moodPeriodLabel">Last 6 Months</div>
+              <button class="mood-nav-btn" id="moodNextBtn" onclick="navigateMoodPeriod(1)">›</button>
+            </div>
+            <div class="mood-trend-graph">
+              <div class="mood-y-axis">
+                <div class="mood-y-label" data-mood="great">😊</div>
+                <div class="mood-y-label" data-mood="good">😀</div>
+                <div class="mood-y-label" data-mood="okay">😐</div>
+                <div class="mood-y-label" data-mood="bad">🙁</div>
+                <div class="mood-y-label" data-mood="terrible">😢</div>
+              </div>
+              <div class="mood-graph-area">
+                <svg id="moodTrendSvg" class="mood-svg" viewBox="0 0 800 300" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="moodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color:#A8BAAA;stop-opacity:0.3" />
+                      <stop offset="100%" style="stop-color:#A8BAAA;stop-opacity:0.05" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Grid lines -->
+                  <line x1="0" y1="60" x2="800" y2="60" stroke="#E3DDD7" stroke-width="1"/>
+                  <line x1="0" y1="120" x2="800" y2="120" stroke="#E3DDD7" stroke-width="1"/>
+                  <line x1="0" y1="180" x2="800" y2="180" stroke="#E3DDD7" stroke-width="1"/>
+                  <line x1="0" y1="240" x2="800" y2="240" stroke="#E3DDD7" stroke-width="1"/>
+                  <!-- Path will be added dynamically -->
+                  <path id="moodTrendPath" fill="url(#moodGradient)" stroke="#A8BAAA" stroke-width="3" />
+                  <path id="moodTrendLine" fill="none" stroke="#A8BAAA" stroke-width="3" />
+                </svg>
+                <div class="mood-x-axis" id="moodXAxis">
+                  <!-- Labels will be added dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Right Side: Events & Activities -->
@@ -110,9 +156,9 @@
           <div class="profile-container">
             <!-- Tabs -->
             <div class="profile-tabs">
-              <button class="tab-btn active" onclick="switchTab('my-events')">📅 My Events</button>
-              <button class="tab-btn" onclick="switchTab('created-events')">🎯 Events I Created</button>
-              <button class="tab-btn" onclick="switchTab('my-communities')">👥 My Communities</button>
+              <button class="tab-btn active" onclick="switchTab(this, 'my-events')">My Events</button>
+              <button class="tab-btn" onclick="switchTab(this, 'created-events')">Events I Created</button>
+              <button class="tab-btn" onclick="switchTab(this, 'my-communities')">My Communities</button>
             </div>
 
             <!-- My Events Tab -->

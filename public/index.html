@@ -19,12 +19,12 @@
         <li><a href="communities.html">Communities</a></li>
         <li id="profileLink" style="display: none;"><a href="profile.html">My Profile</a></li>
         <li id="authLinks">
-          <a href="login.html" class="btn btn-outline">Login</a>
-          <a href="register.html" class="btn btn-primary">Sign Up</a>
+          <a href="login.html">Login</a>
+          <a href="register.html">Sign Up</a>
         </li>
         <li id="userLinks" style="display: none;">
-          <a href="create-event.html" class="btn btn-primary">Create Event</a>
-          <a href="#" id="logoutBtn" class="btn btn-outline">Logout</a>
+          <a href="create-event.html">Create Event</a>
+          <a href="#" id="logoutBtn">Logout</a>
         </li>
       </ul>
     </div>
@@ -33,7 +33,14 @@
   <section class="hero-new">
     <div class="container">
       <div class="hero-layout">
-        <!-- Compact Mood Tracker -->
+        <!-- Motivational Section on Top (Full Width) -->
+        <div class="motivational-section">
+          <blockquote id="dailyQuote" class="daily-quote">
+            <p class="quote-text">"Slow progress is still progress."</p>
+          </blockquote>
+        </div>
+        
+        <!-- Compact Mood Tracker on Left -->
         <div class="compact-mood-tracker">
           <h3>Today's Mood</h3>
           <div class="compact-mood-selector">
@@ -49,48 +56,33 @@
           <div id="compactMoodStatus" class="compact-mood-status"></div>
           <div class="weekly-mood-display">
             <div class="weekly-mood-day" data-day="0">
-              <div class="day-label">S</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">S</div>
             </div>
             <div class="weekly-mood-day" data-day="1">
-              <div class="day-label">M</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">M</div>
             </div>
             <div class="weekly-mood-day" data-day="2">
-              <div class="day-label">T</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">T</div>
             </div>
             <div class="weekly-mood-day" data-day="3">
-              <div class="day-label">W</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">W</div>
             </div>
             <div class="weekly-mood-day" data-day="4">
-              <div class="day-label">T</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">T</div>
             </div>
             <div class="weekly-mood-day" data-day="5">
-              <div class="day-label">F</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">F</div>
             </div>
             <div class="weekly-mood-day" data-day="6">
-              <div class="day-label">S</div>
-              <div class="day-emoji">-</div>
+              <div class="day-display">S</div>
             </div>
           </div>
         </div>
-
-        <!-- Main Content -->
-        <div class="hero-main-content">
-          <div class="motivational-section">
-            <blockquote id="dailyQuote" class="daily-quote">
-              <p class="quote-text">"Slow progress is still progress."</p>
-            </blockquote>
-          </div>
-          
-          <div class="hero-actions">
-            <a href="events.html" class="btn btn-large btn-primary">Explore Events</a>
-            <a href="communities.html" class="btn btn-large btn-outline">Find Communities</a>
-          </div>
+        
+        <!-- Action Buttons on Right -->
+        <div class="hero-actions">
+          <a href="events.html" class="btn btn-large btn-primary">Explore Events</a>
+          <a href="communities.html" class="btn btn-large btn-outline">Find Communities</a>
         </div>
       </div>
     </div>
@@ -112,22 +104,18 @@
       <h2>Why Join Digital AI Buddy?</h2>
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">📅</div>
           <h3>Discover Events</h3>
           <p>Find local events that match your interests and passions</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">👥</div>
           <h3>Join Communities</h3>
           <p>Connect with like-minded people in your area</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">🎯</div>
           <h3>Create Events</h3>
           <p>Organize and host your own events and gatherings</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">🌍</div>
           <h3>Build Networks</h3>
           <p>Expand your social and professional circles</p>
         </div>
