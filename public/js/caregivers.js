@@ -15,6 +15,7 @@ async function loadCaregivers() {
         showLoading();
         const response = await fetch(`${API_URL}/caregivers`);
         console.log('Response status:', response.status);
+        console.log('Full response:', response);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -22,6 +23,12 @@ async function loadCaregivers() {
         
         const caregivers = await response.json();
         console.log('Caregivers loaded:', caregivers.length, caregivers);
+        
+        // Additional debug info
+        const container = document.getElementById('caregiversContainer');
+        console.log('Container found:', container);
+        console.log('About to call displayCaregivers with:', caregivers);
+        
         displayCaregivers(caregivers);
     } catch (error) {
         console.error('Error loading caregivers:', error);
@@ -61,9 +68,13 @@ async function searchCaregivers() {
 
 // Display caregivers
 function displayCaregivers(caregivers) {
-    console.log('displayCaregivers called with:', caregivers);
+    console.log('displayCaregivers called with:', caregivers ? caregivers.length : 0, 'caregivers');
+    
     const container = document.getElementById('caregiversContainer');
-    console.log('Container element:', container);
+    if (!container) {
+        console.error('caregiversContainer not found!');
+        return;
+    }
     
     if (!caregivers || caregivers.length === 0) {
         console.log('No caregivers to display');
@@ -76,45 +87,68 @@ function displayCaregivers(caregivers) {
         return;
     }
     
-    container.innerHTML = caregivers.map(caregiver => `
-        <div class="caregiver-card" onclick="viewCaregiver('${caregiver.id}')">
-            <div class="caregiver-header">
-                <div class="caregiver-avatar">${getInitials(caregiver.name)}</div>
-                <div class="caregiver-info">
-                    <h3>
-                        ${caregiver.name}
-                        ${caregiver.verified ? '<span class="verified-badge">✓ Verified</span>' : ''}
-                    </h3>
-                    <div class="caregiver-rating">
-                        <span class="star">★</span>
-                        <span>${caregiver.rating.toFixed(1)}</span>
-                        <span>(${caregiver.reviews} reviews)</span>
+    console.log('Building HTML for', caregivers.length, 'caregivers');
+    
+    let html = '';
+    
+    caregivers.forEach((caregiver, index) => {
+        console.log('Processing caregiver', index, ':', caregiver.name);
+        
+        // Build services tags safely
+        let servicesHtml = '';
+        if (caregiver.services && Array.isArray(caregiver.services)) {
+            const displayServices = caregiver.services.slice(0, 3);
+            servicesHtml = displayServices.map(service => 
+                `<span class="service-tag">${service}</span>`
+            ).join('');
+            
+            if (caregiver.services.length > 3) {
+                servicesHtml += `<span class="service-tag">+${caregiver.services.length - 3} more</span>`;
+            }
+        }
+        
+        // Build the card HTML
+        html += `
+            <div class="caregiver-card" onclick="viewCaregiver('${caregiver.id}')">
+                <div class="caregiver-header">
+                    <div class="caregiver-avatar">${getInitials(caregiver.name)}</div>
+                    <div class="caregiver-info">
+                        <h3>
+                            ${caregiver.name}
+                            ${caregiver.verified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                        </h3>
+                        <div class="caregiver-rating">
+                            <span class="star">★</span>
+                            <span>${caregiver.rating ? caregiver.rating.toFixed(1) : '0.0'}</span>
+                            <span>(${caregiver.reviews || 0} reviews)</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <p class="caregiver-bio">${caregiver.bio}</p>
-            
-            <div class="services-tags">
-                ${caregiver.services.slice(0, 3).map(service => 
-                    `<span class="service-tag">${service}</span>`
-                ).join('')}
-                ${caregiver.services.length > 3 ? `<span class="service-tag">+${caregiver.services.length - 3} more</span>` : ''}
-            </div>
-            
-            <div class="caregiver-details">
-                <div>
-                    <div class="rate">$${caregiver.hourlyRate}/hr</div>
-                    <div class="location">📍 ${caregiver.location.area}</div>
+                
+                <p class="caregiver-bio">${caregiver.bio || ''}</p>
+                
+                <div class="services-tags">
+                    ${servicesHtml}
                 </div>
-                ${caregiver.distance ? `<span class="distance">${caregiver.distance} km away</span>` : ''}
+                
+                <div class="caregiver-details">
+                    <div>
+                        <div class="rate">$${caregiver.hourlyRate || 0}/hr</div>
+                        <div class="location">📍 ${caregiver.location && caregiver.location.area ? caregiver.location.area : 'Unknown'}</div>
+                    </div>
+                    ${caregiver.distance ? `<span class="distance">${caregiver.distance} km away</span>` : ''}
+                </div>
+                
+                <button class="btn-contact" onclick="event.stopPropagation(); contactCaregiver('${caregiver.id}')">
+                    Contact Now
+                </button>
             </div>
-            
-            <button class="btn-contact" onclick="event.stopPropagation(); contactCaregiver('${caregiver.id}')">
-                Contact Now
-            </button>
-        </div>
-    `).join('');
+        `;
+    });
+    
+    console.log('Setting innerHTML with HTML length:', html.length);
+    container.innerHTML = html;
+    console.log('Caregivers displayed successfully');
 }
 
 // Get initials from name
@@ -165,15 +199,45 @@ async function contactCaregiver(caregiverId) {
 
 // Show loading spinner
 function showLoading() {
-    document.getElementById('loadingSpinner').style.display = 'block';
-    document.getElementById('caregiversContainer').style.display = 'none';
+    console.log('showLoading called');
+    const spinner = document.getElementById('loadingSpinner');
+    const container = document.getElementById('caregiversContainer');
+    
+    if (spinner) {
+        spinner.style.display = 'block';
+        console.log('Spinner shown');
+    } else {
+        console.error('loadingSpinner element not found');
+    }
+    
+    if (container) {
+        container.style.display = 'none';
+        console.log('Container hidden');
+    } else {
+        console.error('caregiversContainer element not found');
+    }
 }
 
 // Hide loading spinner
 function hideLoading() {
-    document.getElementById('loadingSpinner').style.display = 'none';
+    console.log('hideLoading called');
+    const spinner = document.getElementById('loadingSpinner');
     const container = document.getElementById('caregiversContainer');
-    container.style.display = 'grid';
+    
+    if (spinner) {
+        spinner.style.display = 'none';
+        console.log('Spinner hidden');
+    } else {
+        console.error('loadingSpinner element not found');
+    }
+    
+    if (container) {
+        container.style.display = 'grid';
+        container.style.visibility = 'visible';
+        console.log('Container shown');
+    } else {
+        console.error('caregiversContainer element not found');
+    }
 }
 
 // Show error message

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Caregivers Simple</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .caregivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .caregiver-card {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Caregivers</h1>
+    <button onclick="loadCaregivers()">Load Caregivers</button>
+    <div id="loadingSpinner" class="loading" style="display: none;">Loading...</div>
+    <div id="caregiversContainer" class="caregivers-grid"></div>
+
+    <script>
+        console.log('Script loaded');
+        
+        // Test basic functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            const container = document.getElementById('caregiversContainer');
+            console.log('Container found:', !!container);
+            
+            // Show test message
+            container.innerHTML = '<div class="caregiver-card">Test card - containers working!</div>';
+        });
+
+        async function loadCaregivers() {
+            console.log('loadCaregivers called');
+            const container = document.getElementById('caregiversContainer');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            try {
+                // Show loading
+                spinner.style.display = 'block';
+                container.style.display = 'none';
+                
+                console.log('Fetching from /api/caregivers');
+                const response = await fetch('/api/caregivers');
+                console.log('Response:', response.status, response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const caregivers = await response.json();
+                console.log('Caregivers loaded:', caregivers.length);
+                console.log('First caregiver:', caregivers[0]);
+                
+                // Hide loading
+                spinner.style.display = 'none';
+                container.style.display = 'grid';
+                
+                // Display caregivers
+                if (caregivers.length === 0) {
+                    container.innerHTML = '<div>No caregivers found</div>';
+                    return;
+                }
+                
+                container.innerHTML = caregivers.map(c => `
+                    <div class="caregiver-card">
+                        <h3>${c.name}</h3>
+                        <p>Rating: ${c.rating} (${c.reviews} reviews)</p>
+                        <p>Rate: $${c.hourlyRate}/hr</p>
+                        <p>Area: ${c.location.area}</p>
+                        <p>${c.bio}</p>
+                    </div>
+                `).join('');
+                
+                console.log('Caregivers displayed');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                spinner.style.display = 'none';
+                container.style.display = 'block';
+                container.innerHTML = `<div>Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

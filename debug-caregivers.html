@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Caregivers</title>
+</head>
+<body>
+    <h1>Debug Caregivers</h1>
+    <button onclick="testCaregivers()">Test Load Caregivers</button>
+    <div id="result"></div>
+
+    <script>
+        async function testCaregivers() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                console.log('Testing caregivers API...');
+                const response = await fetch('/api/caregivers');
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const caregivers = await response.json();
+                console.log('Caregivers loaded:', caregivers);
+                
+                resultDiv.innerHTML = `
+                    <h3>SUCCESS!</h3>
+                    <p>Loaded ${caregivers.length} caregivers</p>
+                    <pre>${JSON.stringify(caregivers, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3>ERROR!</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

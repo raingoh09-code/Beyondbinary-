@@ -21,6 +21,7 @@ const userRoutes = require('./routes/users');
 const studyGroupRoutes = require('./routes/study-groups');
 const caregiverRoutes = require('./routes/caregivers');
 const chatbotRoutes = require('./routes/chatbot');
+const postRoutes = require('./routes/posts');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -30,6 +31,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/study-groups', studyGroupRoutes);
 app.use('/api/caregivers', caregiverRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/posts', postRoutes);
 
 // Serve frontend
 app.get('/', (req, res) => {
