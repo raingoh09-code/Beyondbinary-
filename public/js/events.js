@@ -3,6 +3,8 @@ let allEvents = [];
 let map;
 let markers = [];
 let userLocation = null;
+let userCountry = null;
+let userCountryBounds = null;
 let currentView = 'list';
 let infoWindow;
 
@@ -446,11 +448,62 @@ function initMap() {
             strokeWeight: 2,
           }
         });
-        
-        // Display events if we have them
-        if (allEvents.length > 0 && currentView === 'map') {
-          displayEventsOnMap(allEvents);
-        }
+
+        // Determine user's country and its bounds so we can focus the map
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: userLocation }, (results, status) => {
+          if (status === 'OK' && results && results.length > 0) {
+            // Try to find country component
+            let countryName = null;
+            for (const res of results) {
+              for (const comp of res.address_components) {
+                if (comp.types && comp.types.indexOf('country') !== -1) {
+                  countryName = comp.long_name;
+                  break;
+                }
+              }
+              if (countryName) break;
+            }
+
+            if (countryName) {
+              userCountry = countryName;
+              // Get bounds for the detected country
+              geocoder.geocode({ address: countryName }, (countryResults, cStatus) => {
+                if (cStatus === 'OK' && countryResults && countryResults[0]) {
+                  const geom = countryResults[0].geometry;
+                  userCountryBounds = geom.viewport || geom.bounds ? (geom.viewport || geom.bounds) : null;
+                  if (userCountryBounds) {
+                    try {
+                      map.fitBounds(userCountryBounds);
+                    } catch (e) {
+                      console.warn('Could not fit map to country bounds', e);
+                    }
+                  }
+
+                  // Display events now that we have country context
+                  if (allEvents.length > 0 && currentView === 'map') {
+                    displayEventsOnMap(allEvents);
+                  }
+                } else {
+                  // Fallback to simply display events
+                  if (allEvents.length > 0 && currentView === 'map') {
+                    displayEventsOnMap(allEvents);
+                  }
+                }
+              });
+            } else {
+              // No country found; just display events
+              if (allEvents.length > 0 && currentView === 'map') {
+                displayEventsOnMap(allEvents);
+              }
+            }
+          } else {
+            // Geocoder failed; still display events
+            if (allEvents.length > 0 && currentView === 'map') {
+              displayEventsOnMap(allEvents);
+            }
+          }
+        });
       },
       () => {
         console.log('Location access denied');
@@ -502,10 +555,16 @@ function displayEventsOnMap(events) {
   events.forEach((event, index) => {
     if (!event.coordinates) return;
 
+    const position = new google.maps.LatLng(event.coordinates.lat, event.coordinates.lng);
+
+    // Determine whether this event is inside the user's country bounds (if known)
+    const inUserCountry = userCountryBounds ? userCountryBounds.contains(position) : true;
+
     const marker = new google.maps.Marker({
-      position: event.coordinates,
+      position: position,
       map: map,
       title: event.title,
+      zIndex: inUserCountry ? 999 : 100,
       label: {
         text: `${index + 1}`,
         color: 'white',
@@ -514,11 +573,11 @@ function displayEventsOnMap(events) {
       },
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 15,
+        scale: inUserCountry ? 15 : 10,
         fillColor: getCategoryColor(event.category),
-        fillOpacity: 0.9,
+        fillOpacity: inUserCountry ? 0.95 : 0.45,
         strokeColor: 'white',
-        strokeWeight: 2,
+        strokeWeight: inUserCountry ? 2 : 1,
       }
     });
 
@@ -571,7 +630,18 @@ function displayEventsOnMap(events) {
 
   // Fit map to show all markers
   if (markers.length > 0) {
-    map.fitBounds(bounds);
+    // Prefer focusing the map on the user's country if available,
+    // while keeping markers from all countries visible on the map.
+    if (userCountryBounds) {
+      try {
+        map.fitBounds(userCountryBounds);
+      } catch (e) {
+        console.warn('Could not fit to user country bounds, falling back to all markers bounds', e);
+        map.fitBounds(bounds);
+      }
+    } else {
+      map.fitBounds(bounds);
+    }
   }
 
   // Update nearby events list

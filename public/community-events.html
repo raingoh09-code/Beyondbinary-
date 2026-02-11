@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Events - Digital AI Buddy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <img src="logo.png" alt="Digital AI Buddy Logo" class="logo">
+        <h1>Community Events</h1>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="communities.html">Communities</a></li>
+        <li id="profileLink" style="display: none;"><a href="profile.html">My Profile</a></li>
+        <li id="authLinks">
+          <a href="login.html">Login</a>
+          <a href="register.html">Sign Up</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <h2>Community Events</h2>
+      <p>Events curated from across our platform — quick access and shortcuts included.</p>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <div class="container" style="max-width:1100px;">
+      <div style="display:flex; gap:16px; align-items:center; margin-bottom:12px;">
+        <input id="searchInput" class="search-input" placeholder="Search events (press / to focus)" style="flex:1;" />
+        <select id="categoryFilter" style="width:180px;">
+          <option value="">All categories</option>
+          <option>Technology</option>
+          <option>Sports</option>
+          <option>Arts</option>
+          <option>Business</option>
+          <option>Food</option>
+          <option>Health</option>
+          <option>Education</option>
+          <option>Social</option>
+        </select>
+        <select id="dateFilter" style="width:160px;">
+          <option value="all">All dates</option>
+          <option value="today">Today</option>
+          <option value="this-week">This week</option>
+          <option value="this-month">This month</option>
+        </select>
+        <button id="nearMeBtn" class="btn btn-outline">📍 Near Me (n)</button>
+        <button id="refreshBtn" class="btn">Refresh (r)</button>
+      </div>
+
+      <div id="shortcutsHint" style="font-size:13px; color:#666; margin-bottom:8px;">Shortcuts: <strong>/</strong> focus search • <strong>n</strong> near me • <strong>r</strong> refresh</div>
+
+      <div id="eventsList" class="events-grid">
+        <div class="loading">Loading events...</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Digital AI Buddy. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/community-events.js"></script>
+</body>
+</html>

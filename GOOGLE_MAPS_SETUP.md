@@ -144,7 +144,7 @@ Update the event creation to save coordinates:
 ```javascript
 // In routes/events.js
 router.post('/', authenticateToken, async (req, res) => {
-  const { title, description, date, time, location, category, maxAttendees } = req.body;
+  const { title, description, date, time, location, categormaxAttendees } = req.body;
   
   // Geocode the location
   // ... geocoding code ...
