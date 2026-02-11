@@ -1067,7 +1067,7 @@ body {
 /* Map View */
 #map {
   width: 100%;
-  height: 500px;
+  height: 600px;
   border-radius: 1rem;
   box-shadow: var(--shadow-lg);
   margin-bottom: 2rem;
